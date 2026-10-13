@@ -1,0 +1,12 @@
+{
+  "name": "Voltly EV Companion",
+  "short_name": "Voltly",
+  "description": "Plan EV routes and find charging stations near your start, route and destination.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#08111c",
+  "theme_color": "#08111c",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
