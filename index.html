@@ -1,401 +1,1286 @@
-
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Voltly | EV Companion</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<style>
-:root{--bg:#090e0b;--panel:#141d17;--panel2:#1c2920;--line:#304035;--text:#f4f8f3;--muted:#9aada0;--lime:#caff58;--blue:#8bd8ff}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,Segoe UI,sans-serif}
-button,input,select{font:inherit}
-button{cursor:pointer}
-header{height:75px;position:sticky;top:0;z-index:1000;background:#0b110eef;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 4%}
-.logo{font-size:26px;font-weight:900;letter-spacing:-1px}.logo span{color:var(--lime)}
-.logo small{display:block;font-size:9px;letter-spacing:3px;color:var(--muted);line-height:1}
-.status{color:var(--lime);font-size:11px;letter-spacing:1px}
-.layout{max-width:1750px;margin:auto;padding:28px 3%;display:grid;grid-template-columns:220px minmax(0,1fr);gap:25px}
-aside{position:sticky;top:100px;align-self:start}
-nav button{display:block;width:100%;text-align:left;padding:14px 15px;margin-bottom:8px;background:var(--panel);border:1px solid var(--line);border-radius:12px;color:var(--text);font-weight:750}
-nav button.active,nav button:hover{border-color:var(--lime);color:var(--lime);background:#202e23}
-.sidebox,.panel,.stat{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:21px;min-width:0}
-.sidebox{font-size:12px;color:var(--muted);margin-top:16px}.sidebox strong{display:block;color:var(--lime);font-size:25px}
-main{min-width:0}.page{display:none}.page.active{display:block}
-.eyebrow{font-size:11px;color:var(--lime);font-weight:900;letter-spacing:2px;margin-bottom:8px}
-h1{font-size:clamp(32px,4vw,48px);line-height:1.08;letter-spacing:-1.5px;margin:0}
-h2{font-size:18px;margin:0}p{color:var(--muted)}
-.pagehead{display:flex;align-items:end;justify-content:space-between;gap:15px;margin-bottom:24px}.pagehead p{margin:10px 0 0}
-.grid{display:grid;gap:16px}.stats{grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:16px}
-.stat{padding:18px}.stat label{font-size:12px;color:var(--muted)}.stat strong{display:block;font-size:29px;margin:8px 0 3px;letter-spacing:-1px}
-.accent{color:var(--lime)}.homegrid{grid-template-columns:1.15fr 1fr}.plannergrid{grid-template-columns:minmax(300px,.85fr) minmax(0,1.15fr)}
-.panelhead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px}.muted{font-size:12px;color:var(--muted)}
-.field{display:grid;gap:7px;margin-bottom:14px}.field label{font-size:12px;color:#bdcbbf}
-input,select{width:100%;min-width:0;background:#0b120d;color:var(--text);border:1px solid #35463a;border-radius:10px;padding:12px;outline:none}
-input:focus,select:focus{border-color:var(--lime)}
-.row{display:flex;gap:9px;align-items:center}
-.btn{border:1px solid var(--line);border-radius:10px;padding:11px 14px;font-weight:800;color:var(--text);background:#202c23}
-.primary{background:var(--lime);color:#10170b;border-color:var(--lime)}.btn:hover{filter:brightness(1.08)}.btn:disabled{opacity:.5;cursor:wait}
-.full{width:100%}.progress{height:7px;background:#344236;border-radius:10px;overflow:hidden;margin:12px 0}.progress span{display:block;height:100%;background:var(--lime);width:49%}
-.batteryrow{display:flex;gap:20px;align-items:center;margin:20px 0}
-.ring{width:112px;height:112px;border-radius:50%;display:grid;place-items:center;flex-shrink:0;background:conic-gradient(var(--lime) 49%,#344236 0);position:relative}
-.ring:before{content:"";position:absolute;inset:9px;background:var(--panel);border-radius:50%}
-.ring div{position:relative;text-align:center}.ring strong{display:block;font-size:29px}.ring small{font-size:10px;color:var(--muted)}
-.quick{display:grid;grid-template-columns:1fr 1fr;gap:10px}.quick button{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:16px;text-align:left}.quick button:hover{border-color:var(--lime)}
-#map{height:clamp(380px,58vh,720px);min-height:360px;background:#152019;border-radius:13px;overflow:hidden}
-.mapwrap{padding:16px}.mapnote{font-size:11px;color:var(--muted);margin:12px 2px 0}
-.notice{display:none;background:#2a321d;border:1px solid #65783c;padding:12px;border-radius:10px;font-size:12px;margin:12px 0;color:#e7f4d4}
-.notice.error{background:#301b1b;border-color:#754040;color:#ffbaba}
-.results{display:none;margin-top:18px}.results.show{display:block}
-.resultgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:14px}
-.result{background:var(--panel2);padding:12px;border:1px solid var(--line);border-radius:11px}
-.result small{display:block;color:var(--muted)}.result strong{display:block;font-size:19px;margin-top:4px}
-.station-list{display:grid;gap:10px;margin-top:13px}
-.station{border:1px solid var(--line);background:#101811;padding:13px;border-radius:12px}
-.station strong{display:block;margin-bottom:3px}.station p{font-size:12px;margin:4px 0}.station a{color:var(--lime);font-size:12px}
-.trip{padding:15px;border:1px solid var(--line);border-radius:12px;margin-bottom:10px;display:flex;gap:15px;justify-content:space-between;align-items:center;background:#101811}
-.trip p{font-size:12px;margin:5px 0}.tripactions{display:flex;gap:6px;flex-wrap:wrap}.empty{padding:24px;border:1px dashed var(--line);border-radius:12px;color:var(--muted);text-align:center}
-.chart{height:230px;display:flex;align-items:flex-end;gap:15px;padding:20px 5px 0;border-bottom:1px solid var(--line)}
-.barcol{flex:1;min-width:0;height:100%;display:flex;align-items:center;justify-content:flex-end;flex-direction:column;gap:8px}
-.bar{width:min(44px,80%);background:linear-gradient(var(--lime),#6c9631);border-radius:7px 7px 0 0;min-height:3px;position:relative}
-.bar span{position:absolute;top:-21px;left:50%;transform:translateX(-50%);font-size:10px}.barcol small{color:var(--muted);font-size:10px}
-.metric{display:flex;justify-content:space-between;gap:10px;padding:13px 0;border-bottom:1px solid var(--line);font-size:13px}.metric span{color:var(--muted)}
-footer{text-align:center;color:#718173;font-size:11px;padding:25px}
-.leaflet-container{font-family:inherit;background:#152019}.leaflet-control-zoom a{background:#111a14!important;color:white!important;border-color:#35463a!important}
-.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#152019;color:white}.leaflet-popup-content{font-size:12px}
-@media(max-width:1050px){.layout{grid-template-columns:175px minmax(0,1fr);gap:15px}.stats{grid-template-columns:repeat(2,1fr)}.homegrid,.plannergrid{grid-template-columns:1fr}}
-@media(max-width:700px){header{height:65px;padding:0 13px}.layout{display:block;padding:14px 10px}.sidebar{position:static}nav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}nav button{font-size:10px;text-align:center;padding:10px 2px;margin:0}.sidebox{display:none}.pagehead{display:block}.pagehead h1{font-size:34px}.stats{gap:8px}.stat{padding:13px}.stat strong{font-size:23px}.panel{padding:14px}.batteryrow{gap:12px}.ring{width:95px;height:95px}.ring strong{font-size:24px}.trip{display:block}.tripactions{margin-top:12px}.tripactions .btn{padding:8px}.resultgrid{grid-template-columns:1fr 1fr}#map{height:370px}.quick{gap:7px}.quick button{padding:12px}.row .btn{white-space:normal}}
-</style>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <title>Voltly | EV Companion</title>
+   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+   <style>
+      :root {
+         --bg: #090e0b;
+         --panel: #141d17;
+         --panel2: #1c2920;
+         --line: #304035;
+         --text: #f4f8f3;
+         --muted: #9aada0;
+         --lime: #caff58;
+         --blue: #8bd8ff
+      }
+
+      * {
+         box-sizing: border-box
+      }
+
+      body {
+         margin: 0;
+         background: var(--bg);
+         color: var(--text);
+         font: 15px/1.5 system-ui, Segoe UI, sans-serif
+      }
+
+      button,
+      input,
+      select {
+         font: inherit
+      }
+
+      button {
+         cursor: pointer
+      }
+
+      header {
+         height: 75px;
+         position: sticky;
+         top: 0;
+         z-index: 1000;
+         background: #0b110eef;
+         border-bottom: 1px solid var(--line);
+         display: flex;
+         align-items: center;
+         justify-content: space-between;
+         padding: 0 4%
+      }
+
+      .logo {
+         font-size: 26px;
+         font-weight: 900;
+         letter-spacing: -1px
+      }
+
+      .logo span {
+         color: var(--lime)
+      }
+
+      .logo small {
+         display: block;
+         font-size: 9px;
+         letter-spacing: 3px;
+         color: var(--muted);
+         line-height: 1
+      }
+
+      .status {
+         color: var(--lime);
+         font-size: 11px;
+         letter-spacing: 1px
+      }
+
+      .layout {
+         max-width: 1750px;
+         margin: auto;
+         padding: 28px 3%;
+         display: grid;
+         grid-template-columns: 220px minmax(0, 1fr);
+         gap: 25px
+      }
+
+      aside {
+         position: sticky;
+         top: 100px;
+         align-self: start
+      }
+
+      nav button {
+         display: block;
+         width: 100%;
+         text-align: left;
+         padding: 14px 15px;
+         margin-bottom: 8px;
+         background: var(--panel);
+         border: 1px solid var(--line);
+         border-radius: 12px;
+         color: var(--text);
+         font-weight: 750
+      }
+
+      nav button.active,
+      nav button:hover {
+         border-color: var(--lime);
+         color: var(--lime);
+         background: #202e23
+      }
+
+      .sidebox,
+      .panel,
+      .stat {
+         background: var(--panel);
+         border: 1px solid var(--line);
+         border-radius: 18px;
+         padding: 21px;
+         min-width: 0
+      }
+
+      .sidebox {
+         font-size: 12px;
+         color: var(--muted);
+         margin-top: 16px
+      }
+
+      .sidebox strong {
+         display: block;
+         color: var(--lime);
+         font-size: 25px
+      }
+
+      main {
+         min-width: 0
+      }
+
+      .page {
+         display: none
+      }
+
+      .page.active {
+         display: block
+      }
+
+      .eyebrow {
+         font-size: 11px;
+         color: var(--lime);
+         font-weight: 900;
+         letter-spacing: 2px;
+         margin-bottom: 8px
+      }
+
+      h1 {
+         font-size: clamp(32px, 4vw, 48px);
+         line-height: 1.08;
+         letter-spacing: -1.5px;
+         margin: 0
+      }
+
+      h2 {
+         font-size: 18px;
+         margin: 0
+      }
+
+      p {
+         color: var(--muted)
+      }
+
+      .pagehead {
+         display: flex;
+         align-items: end;
+         justify-content: space-between;
+         gap: 15px;
+         margin-bottom: 24px
+      }
+
+      .pagehead p {
+         margin: 10px 0 0
+      }
+
+      .grid {
+         display: grid;
+         gap: 16px
+      }
+
+      .stats {
+         grid-template-columns: repeat(4, minmax(0, 1fr));
+         margin-bottom: 16px
+      }
+
+      .stat {
+         padding: 18px
+      }
+
+      .stat label {
+         font-size: 12px;
+         color: var(--muted)
+      }
+
+      .stat strong {
+         display: block;
+         font-size: 29px;
+         margin: 8px 0 3px;
+         letter-spacing: -1px
+      }
+
+      .accent {
+         color: var(--lime)
+      }
+
+      .homegrid {
+         grid-template-columns: 1.15fr 1fr
+      }
+
+      .plannergrid {
+         grid-template-columns: minmax(300px, .85fr) minmax(0, 1.15fr)
+      }
+
+      .panelhead {
+         display: flex;
+         justify-content: space-between;
+         align-items: center;
+         gap: 10px;
+         margin-bottom: 16px
+      }
+
+      .muted {
+         font-size: 12px;
+         color: var(--muted)
+      }
+
+      .field {
+         display: grid;
+         gap: 7px;
+         margin-bottom: 14px
+      }
+
+      .field label {
+         font-size: 12px;
+         color: #bdcbbf
+      }
+
+      input,
+      select {
+         width: 100%;
+         min-width: 0;
+         background: #0b120d;
+         color: var(--text);
+         border: 1px solid #35463a;
+         border-radius: 10px;
+         padding: 12px;
+         outline: none
+      }
+
+      input:focus,
+      select:focus {
+         border-color: var(--lime)
+      }
+
+      .row {
+         display: flex;
+         gap: 9px;
+         align-items: center
+      }
+
+      .btn {
+         border: 1px solid var(--line);
+         border-radius: 10px;
+         padding: 11px 14px;
+         font-weight: 800;
+         color: var(--text);
+         background: #202c23
+      }
+
+      .primary {
+         background: var(--lime);
+         color: #10170b;
+         border-color: var(--lime)
+      }
+
+      .btn:hover {
+         filter: brightness(1.08)
+      }
+
+      .btn:disabled {
+         opacity: .5;
+         cursor: wait
+      }
+
+      .full {
+         width: 100%
+      }
+
+      .progress {
+         height: 7px;
+         background: #344236;
+         border-radius: 10px;
+         overflow: hidden;
+         margin: 12px 0
+      }
+
+      .progress span {
+         display: block;
+         height: 100%;
+         background: var(--lime);
+         width: 49%
+      }
+
+      .batteryrow {
+         display: flex;
+         gap: 20px;
+         align-items: center;
+         margin: 20px 0
+      }
+
+      .ring {
+         width: 112px;
+         height: 112px;
+         border-radius: 50%;
+         display: grid;
+         place-items: center;
+         flex-shrink: 0;
+         background: conic-gradient(var(--lime) 49%, #344236 0);
+         position: relative
+      }
+
+      .ring:before {
+         content: "";
+         position: absolute;
+         inset: 9px;
+         background: var(--panel);
+         border-radius: 50%
+      }
+
+      .ring div {
+         position: relative;
+         text-align: center
+      }
+
+      .ring strong {
+         display: block;
+         font-size: 29px
+      }
+
+      .ring small {
+         font-size: 10px;
+         color: var(--muted)
+      }
+
+      .quick {
+         display: grid;
+         grid-template-columns: 1fr 1fr;
+         gap: 10px
+      }
+
+      .quick button {
+         background: var(--panel2);
+         color: var(--text);
+         border: 1px solid var(--line);
+         border-radius: 12px;
+         padding: 16px;
+         text-align: left
+      }
+
+      .quick button:hover {
+         border-color: var(--lime)
+      }
+
+      #map {
+         height: clamp(380px, 58vh, 720px);
+         min-height: 360px;
+         background: #152019;
+         border-radius: 13px;
+         overflow: hidden
+      }
+
+      .mapwrap {
+         padding: 16px
+      }
+
+      .mapnote {
+         font-size: 11px;
+         color: var(--muted);
+         margin: 12px 2px 0
+      }
+
+      .notice {
+         display: none;
+         background: #2a321d;
+         border: 1px solid #65783c;
+         padding: 12px;
+         border-radius: 10px;
+         font-size: 12px;
+         margin: 12px 0;
+         color: #e7f4d4
+      }
+
+      .notice.error {
+         background: #301b1b;
+         border-color: #754040;
+         color: #ffbaba
+      }
+
+      .results {
+         display: none;
+         margin-top: 18px
+      }
+
+      .results.show {
+         display: block
+      }
+
+      .resultgrid {
+         display: grid;
+         grid-template-columns: repeat(3, 1fr);
+         gap: 9px;
+         margin-bottom: 14px
+      }
+
+      .result {
+         background: var(--panel2);
+         padding: 12px;
+         border: 1px solid var(--line);
+         border-radius: 11px
+      }
+
+      .result small {
+         display: block;
+         color: var(--muted)
+      }
+
+      .result strong {
+         display: block;
+         font-size: 19px;
+         margin-top: 4px
+      }
+
+      .station-list {
+         display: grid;
+         gap: 10px;
+         margin-top: 13px
+      }
+
+      .station {
+         border: 1px solid var(--line);
+         background: #101811;
+         padding: 13px;
+         border-radius: 12px
+      }
+
+      .station strong {
+         display: block;
+         margin-bottom: 3px
+      }
+
+      .station p {
+         font-size: 12px;
+         margin: 4px 0
+      }
+
+      .station a {
+         color: var(--lime);
+         font-size: 12px
+      }
+
+      .trip {
+         padding: 15px;
+         border: 1px solid var(--line);
+         border-radius: 12px;
+         margin-bottom: 10px;
+         display: flex;
+         gap: 15px;
+         justify-content: space-between;
+         align-items: center;
+         background: #101811
+      }
+
+      .trip p {
+         font-size: 12px;
+         margin: 5px 0
+      }
+
+      .tripactions {
+         display: flex;
+         gap: 6px;
+         flex-wrap: wrap
+      }
+
+      .empty {
+         padding: 24px;
+         border: 1px dashed var(--line);
+         border-radius: 12px;
+         color: var(--muted);
+         text-align: center
+      }
+
+      .chart {
+         height: 230px;
+         display: flex;
+         align-items: flex-end;
+         gap: 15px;
+         padding: 20px 5px 0;
+         border-bottom: 1px solid var(--line)
+      }
+
+      .barcol {
+         flex: 1;
+         min-width: 0;
+         height: 100%;
+         display: flex;
+         align-items: center;
+         justify-content: flex-end;
+         flex-direction: column;
+         gap: 8px
+      }
+
+      .bar {
+         width: min(44px, 80%);
+         background: linear-gradient(var(--lime), #6c9631);
+         border-radius: 7px 7px 0 0;
+         min-height: 3px;
+         position: relative
+      }
+
+      .bar span {
+         position: absolute;
+         top: -21px;
+         left: 50%;
+         transform: translateX(-50%);
+         font-size: 10px
+      }
+
+      .barcol small {
+         color: var(--muted);
+         font-size: 10px
+      }
+
+      .metric {
+         display: flex;
+         justify-content: space-between;
+         gap: 10px;
+         padding: 13px 0;
+         border-bottom: 1px solid var(--line);
+         font-size: 13px
+      }
+
+      .metric span {
+         color: var(--muted)
+      }
+
+      footer {
+         text-align: center;
+         color: #718173;
+         font-size: 11px;
+         padding: 25px
+      }
+
+      .leaflet-container {
+         font-family: inherit;
+         background: #152019
+      }
+
+      .leaflet-control-zoom a {
+         background: #111a14 !important;
+         color: white !important;
+         border-color: #35463a !important
+      }
+
+      .leaflet-popup-content-wrapper,
+      .leaflet-popup-tip {
+         background: #152019;
+         color: white
+      }
+
+      .leaflet-popup-content {
+         font-size: 12px
+      }
+
+      @media(max-width:1050px) {
+         .layout {
+            grid-template-columns: 175px minmax(0, 1fr);
+            gap: 15px
+         }
+
+         .stats {
+            grid-template-columns: repeat(2, 1fr)
+         }
+
+         .homegrid,
+         .plannergrid {
+            grid-template-columns: 1fr
+         }
+      }
+
+      @media(max-width:700px) {
+         header {
+            height: 65px;
+            padding: 0 13px
+         }
+
+         .layout {
+            display: block;
+            padding: 14px 10px
+         }
+
+         .sidebar {
+            position: static
+         }
+
+         nav {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 4px
+         }
+
+         nav button {
+            font-size: 10px;
+            text-align: center;
+            padding: 10px 2px;
+            margin: 0
+         }
+
+         .sidebox {
+            display: none
+         }
+
+         .pagehead {
+            display: block
+         }
+
+         .pagehead h1 {
+            font-size: 34px
+         }
+
+         .stats {
+            gap: 8px
+         }
+
+         .stat {
+            padding: 13px
+         }
+
+         .stat strong {
+            font-size: 23px
+         }
+
+         .panel {
+            padding: 14px
+         }
+
+         .batteryrow {
+            gap: 12px
+         }
+
+         .ring {
+            width: 95px;
+            height: 95px
+         }
+
+         .ring strong {
+            font-size: 24px
+         }
+
+         .trip {
+            display: block
+         }
+
+         .tripactions {
+            margin-top: 12px
+         }
+
+         .tripactions .btn {
+            padding: 8px
+         }
+
+         .resultgrid {
+            grid-template-columns: 1fr 1fr
+         }
+
+         #map {
+            height: 370px
+         }
+
+         .quick {
+            gap: 7px
+         }
+
+         .quick button {
+            padding: 12px
+         }
+
+         .row .btn {
+            white-space: normal
+         }
+      }
+   </style>
 </head>
+
 <body>
-<header>
-<div class="logo"><span>ϟ</span> voltly<small>EV COMPANION</small></div>
-<div class="status">● ELECTRIC JOURNEY</div>
-</header>
+   <header>
+      <div class="logo"><span>ϟ</span> voltly<small>EV COMPANION</small></div>
+      <div class="status">● ELECTRIC JOURNEY</div>
+   </header>
 
-<div class="layout">
-<aside class="sidebar">
-<nav>
-<button class="active" data-page="home">⌂ Home</button>
-<button data-page="planner">↗ Planner</button>
-<button data-page="saved">▣ Saved Trips</button>
-<button data-page="analysis">▥ Analysis</button>
-<button data-page="vehicle">ϟ Vehicle</button>
-</nav>
-<div class="sidebox">CURRENT BATTERY<strong><span id="sideBattery">49</span>%</strong><div class="progress"><span id="sideProgress"></span></div>Saved in this browser.</div>
-</aside>
+   <div class="layout">
+      <aside class="sidebar">
+         <nav>
+            <button class="active" data-page="home">⌂ Home</button>
+            <button data-page="planner">↗ Planner</button>
+            <button data-page="saved">▣ Saved Trips</button>
+            <button data-page="analysis">▥ Analysis</button>
+            <button data-page="vehicle">ϟ Vehicle</button>
+         </nav>
+         <div class="sidebox">CURRENT BATTERY<strong><span id="sideBattery">49</span>%</strong>
+            <div class="progress"><span id="sideProgress"></span></div>Saved in this browser.
+         </div>
+      </aside>
 
-<main>
-<section class="page active" id="page-home">
-<div class="pagehead"><div><div class="eyebrow">YOUR ELECTRIC LIFE</div><h1>Good journeys<br>start here.</h1><p>Your personal dashboard for smarter EV travel.</p></div></div>
-<div class="grid stats">
-<div class="stat"><label>Current battery</label><strong><span id="homeBattery">49</span><span class="accent">%</span></strong><span class="muted">Manually updated</span></div>
-<div class="stat"><label>Saved trips</label><strong id="homeTrips">0</strong><span class="muted">Route library</span></div>
-<div class="stat"><label>Distance travelled</label><strong><span id="homeDistance">0</span><small class="muted"> km</small></strong><span class="muted">Completed journeys</span></div>
-<div class="stat"><label>Estimated range left</label><strong><span id="homeRange">147</span><small class="muted"> km</small></strong><span class="muted">Estimated from battery</span></div>
-</div>
-<div class="grid homegrid">
-<div class="panel">
-<div class="panelhead"><div><h2>Battery overview</h2><div class="muted">Keep your charge level up to date.</div></div><span class="accent">ϟ</span></div>
-<div class="batteryrow"><div class="ring" id="batteryRing"><div><strong><span id="ringBattery">49</span>%</strong><small>BATTERY</small></div></div><div style="flex:1"><h2 id="batteryMessage">Ready for the road</h2><p id="batteryDesc">Your battery setting is saved locally.</p><div class="progress"><span id="homeProgress"></span></div><div class="muted"><span id="remainingRange">147</span> km estimated range</div></div></div>
-<div class="field"><label for="batteryInput">Current battery (%)</label><div class="row"><input id="batteryInput" type="number" min="0" max="100" value="49"><button class="btn primary" id="saveBattery">Save</button></div></div>
-</div>
-<div class="panel"><div class="panelhead"><div><h2>Quick actions</h2><div class="muted">Jump straight into a task.</div></div></div>
-<div class="quick"><button data-go="planner">↗ <b>Plan journey</b><div class="muted">Calculate a route</div></button><button data-go="planner">⚡ <b>Find charging</b><div class="muted">Along your journey</div></button><button data-go="saved">▣ <b>Saved trips</b><div class="muted">Reuse routes</div></button><button data-go="vehicle">ϟ <b>Vehicle settings</b><div class="muted">Range and energy</div></button></div>
-</div>
-</div>
-<div class="panel" style="margin-top:16px"><div class="panelhead"><div><h2>Recent journeys</h2><div class="muted">Your latest saved routes.</div></div><button class="btn" data-go="saved">View all</button></div><div id="recentTrips"><div class="empty">No saved journeys yet.</div></div></div>
-</section>
+      <main>
+         <section class="page active" id="page-home">
+            <div class="pagehead">
+               <div>
+                  <div class="eyebrow">YOUR ELECTRIC LIFE</div>
+                  <h1>Good journeys<br>start here.</h1>
+                  <p>Your personal dashboard for smarter EV travel.</p>
+               </div>
+            </div>
+            <div class="grid stats">
+               <div class="stat"><label>Current battery</label><strong><span id="homeBattery">49</span><span
+                        class="accent">%</span></strong><span class="muted">Manually updated</span></div>
+               <div class="stat"><label>Saved trips</label><strong id="homeTrips">0</strong><span class="muted">Route
+                     library</span></div>
+               <div class="stat"><label>Distance travelled</label><strong><span id="homeDistance">0</span><small
+                        class="muted"> km</small></strong><span class="muted">Completed journeys</span></div>
+               <div class="stat"><label>Estimated range left</label><strong><span id="homeRange">147</span><small
+                        class="muted"> km</small></strong><span class="muted">Estimated from battery</span></div>
+            </div>
+            <div class="grid homegrid">
+               <div class="panel">
+                  <div class="panelhead">
+                     <div>
+                        <h2>Battery overview</h2>
+                        <div class="muted">Keep your charge level up to date.</div>
+                     </div><span class="accent">ϟ</span>
+                  </div>
+                  <div class="batteryrow">
+                     <div class="ring" id="batteryRing">
+                        <div><strong><span id="ringBattery">49</span>%</strong><small>BATTERY</small></div>
+                     </div>
+                     <div style="flex:1">
+                        <h2 id="batteryMessage">Ready for the road</h2>
+                        <p id="batteryDesc">Your battery setting is saved locally.</p>
+                        <div class="progress"><span id="homeProgress"></span></div>
+                        <div class="muted"><span id="remainingRange">147</span> km estimated range</div>
+                     </div>
+                  </div>
+                  <div class="field"><label for="batteryInput">Current battery (%)</label>
+                     <div class="row"><input id="batteryInput" type="number" min="0" max="100" value="49"><button
+                           class="btn primary" id="saveBattery">Save</button></div>
+                  </div>
+               </div>
+               <div class="panel">
+                  <div class="panelhead">
+                     <div>
+                        <h2>Quick actions</h2>
+                        <div class="muted">Jump straight into a task.</div>
+                     </div>
+                  </div>
+                  <div class="quick"><button data-go="planner">↗ <b>Plan journey</b>
+                        <div class="muted">Calculate a route</div>
+                     </button><button data-go="planner">⚡ <b>Find charging</b>
+                        <div class="muted">Along your journey</div>
+                     </button><button data-go="saved">▣ <b>Saved trips</b>
+                        <div class="muted">Reuse routes</div>
+                     </button><button data-go="vehicle">ϟ <b>Vehicle settings</b>
+                        <div class="muted">Range and energy</div>
+                     </button></div>
+               </div>
+            </div>
+            <div class="panel" style="margin-top:16px">
+               <div class="panelhead">
+                  <div>
+                     <h2>Recent journeys</h2>
+                     <div class="muted">Your latest saved routes.</div>
+                  </div><button class="btn" data-go="saved">View all</button>
+               </div>
+               <div id="recentTrips">
+                  <div class="empty">No saved journeys yet.</div>
+               </div>
+            </div>
+         </section>
 
-<section class="page" id="page-planner">
-<div class="pagehead"><div><div class="eyebrow">ROUTE INTELLIGENCE</div><h1>Trip planner</h1><p>Calculate your road route and discover charging stations near your start, along the road, and at your destination.</p></div></div>
-<div class="grid plannergrid">
-<div class="panel">
-<div class="panelhead"><div><h2>Journey details</h2><div class="muted">Enter full place names for better results.</div></div></div>
-<div class="field"><label for="start">Starting point</label><input id="start" placeholder="e.g. Chennai Central"></div>
-<div class="field"><label for="destination">Destination</label><input id="destination" placeholder="e.g. Mahabalipuram"></div>
-<div class="field"><label for="plannerBattery">Current battery (%)</label><input id="plannerBattery" type="number" min="0" max="100" value="49"></div>
-<div class="row"><button class="btn primary" id="calculate" style="flex:1">✦ Calculate route</button><button class="btn" id="clear">Clear</button></div>
-<div class="notice" id="notice"></div>
-<div style="border-top:1px solid var(--line);margin-top:18px;padding-top:15px">
-<div class="field"><label for="manualDistance">Or enter estimated driving distance (km)</label><div class="row"><input id="manualDistance" type="number" min=".1" step=".1" placeholder="Distance in km"><button class="btn" id="useDistance">Use distance</button></div></div>
-</div>
-<div class="results" id="results">
-<div class="resultgrid"><div class="result"><small>Distance</small><strong id="rDistance">—</strong></div><div class="result"><small>Energy used</small><strong id="rEnergy">—</strong></div><div class="result"><small>Battery left</small><strong id="rBattery">—</strong></div></div>
-<p class="muted" id="rSummary"></p>
-<div class="row"><button class="btn primary" id="saveTrip" style="flex:1">＋ Save trip</button><button class="btn" id="markTravelled">✓ Travelled</button></div>
-</div>
-<div style="border-top:1px solid var(--line);margin-top:20px;padding-top:17px">
-<div class="panelhead"><div><h2>Charging stations</h2><div class="muted">Search around the whole journey.</div></div><span class="accent">⚡</span></div>
-<div class="muted" style="margin-bottom:12px">The search includes charging stations near the start, along the road corridor, and near the destination.</div>
-<button class="btn primary full" id="findChargers">⚡ Find charging stations</button>
-<p class="muted">Station data may be incomplete. Live availability is not guaranteed.</p>
-<div id="stationStatus" class="muted" role="status"></div>
-<div id="stationList" class="station-list"><div class="empty">Calculate a route, then search for charging stations.</div></div>
-</div>
-</div>
-<div class="panel mapwrap"><div class="panelhead"><div><h2>Journey map</h2><div class="muted">Route and charging locations</div></div><span class="muted" id="mapStatus">Ready</span></div><div id="map"></div><div class="mapnote">Blue: start · White: destination · Lime: charging station. Online maps require internet access.</div></div>
-</div>
-</section>
+         <section class="page" id="page-planner">
+            <div class="pagehead">
+               <div>
+                  <div class="eyebrow">ROUTE INTELLIGENCE</div>
+                  <h1>Trip planner</h1>
+                  <p>Calculate your road route and discover charging stations near your start, along the road, and at
+                     your destination.</p>
+               </div>
+            </div>
+            <div class="grid plannergrid">
+               <div class="panel">
+                  <div class="panelhead">
+                     <div>
+                        <h2>Journey details</h2>
+                        <div class="muted">Enter full place names for better results.</div>
+                     </div>
+                  </div>
+                  <div class="field"><label for="start">Starting point</label><input id="start"
+                        placeholder="e.g. Chennai Central"></div>
+                  <div class="field"><label for="destination">Destination</label><input id="destination"
+                        placeholder="e.g. Mahabalipuram"></div>
+                  <div class="field"><label for="plannerBattery">Current battery (%)</label><input id="plannerBattery"
+                        type="number" min="0" max="100" value="49"></div>
+                  <div class="row"><button class="btn primary" id="calculate" style="flex:1">✦ Calculate
+                        route</button><button class="btn" id="clear">Clear</button></div>
+                  <div class="notice" id="notice"></div>
+                  <div style="border-top:1px solid var(--line);margin-top:18px;padding-top:15px">
+                     <div class="field"><label for="manualDistance">Or enter estimated driving distance (km)</label>
+                        <div class="row"><input id="manualDistance" type="number" min=".1" step=".1"
+                              placeholder="Distance in km"><button class="btn" id="useDistance">Use distance</button>
+                        </div>
+                     </div>
+                  </div>
+                  <div class="results" id="results">
+                     <div class="resultgrid">
+                        <div class="result"><small>Distance</small><strong id="rDistance">—</strong></div>
+                        <div class="result"><small>Energy used</small><strong id="rEnergy">—</strong></div>
+                        <div class="result"><small>Battery left</small><strong id="rBattery">—</strong></div>
+                     </div>
+                     <p class="muted" id="rSummary"></p>
+                     <div class="row"><button class="btn primary" id="saveTrip" style="flex:1">＋ Save
+                           trip</button><button class="btn" id="markTravelled">✓ Travelled</button></div>
+                  </div>
+                  <div style="border-top:1px solid var(--line);margin-top:20px;padding-top:17px">
+                     <div class="panelhead">
+                        <div>
+                           <h2>Charging stations</h2>
+                           <div class="muted">Search around the whole journey.</div>
+                        </div><span class="accent">⚡</span>
+                     </div>
+                     <div class="muted" style="margin-bottom:12px">The search includes charging stations near the start,
+                        along the road corridor, and near the destination.</div>
+                     <button class="btn primary full" id="findChargers">⚡ Find charging stations</button>
+                     <p class="muted">Station data may be incomplete. Live availability is not guaranteed.</p>
+                     <div id="stationStatus" class="muted" role="status"></div>
+                     <div id="stationList" class="station-list">
+                        <div class="empty">Calculate a route, then search for charging stations.</div>
+                     </div>
+                  </div>
+               </div>
+               <div class="panel mapwrap">
+                  <div class="panelhead">
+                     <div>
+                        <h2>Journey map</h2>
+                        <div class="muted">Route and charging locations</div>
+                     </div><span class="muted" id="mapStatus">Ready</span>
+                  </div>
+                  <div id="map"></div>
+                  <div class="mapnote">Blue: start · White: destination · Lime: charging station. Online maps require
+                     internet access.</div>
+               </div>
+            </div>
+         </section>
 
-<section class="page" id="page-saved">
-<div class="pagehead"><div><div class="eyebrow">YOUR ROUTE LIBRARY</div><h1>Saved trips</h1><p>Reuse a journey or mark it as completed.</p></div></div>
-<div class="row" style="margin-bottom:16px"><input id="tripSearch" placeholder="Search routes…"><select id="tripFilter"><option value="all">All trips</option><option value="planned">Planned</option><option value="travelled">Travelled</option></select><button class="btn" id="exportCsv">Export CSV</button></div>
-<div id="savedList"><div class="empty">No saved trips yet.</div></div>
-</section>
+         <section class="page" id="page-saved">
+            <div class="pagehead">
+               <div>
+                  <div class="eyebrow">YOUR ROUTE LIBRARY</div>
+                  <h1>Saved trips</h1>
+                  <p>Reuse a journey or mark it as completed.</p>
+               </div>
+            </div>
+            <div class="row" style="margin-bottom:16px"><input id="tripSearch" placeholder="Search routes…"><select
+                  id="tripFilter">
+                  <option value="all">All trips</option>
+                  <option value="planned">Planned</option>
+                  <option value="travelled">Travelled</option>
+               </select><button class="btn" id="exportCsv">Export CSV</button></div>
+            <div id="savedList">
+               <div class="empty">No saved trips yet.</div>
+            </div>
+         </section>
 
-<section class="page" id="page-analysis">
-<div class="pagehead"><div><div class="eyebrow">YOUR DRIVING PATTERNS</div><h1>Journey analysis</h1><p>A summary of your completed journeys.</p></div></div>
-<div class="grid stats"><div class="stat"><label>Completed trips</label><strong id="aTrips">0</strong></div><div class="stat"><label>Total distance</label><strong><span id="aDistance">0</span><small class="muted"> km</small></strong></div><div class="stat"><label>Estimated energy</label><strong><span id="aEnergy">0</span><small class="muted"> kWh</small></strong></div><div class="stat"><label>Average trip</label><strong><span id="aAverage">0</span><small class="muted"> km</small></strong></div></div>
-<div class="grid homegrid"><div class="panel"><h2>Distance by trip</h2><div class="muted">Completed journeys</div><div class="chart" id="chart"><div class="empty">Mark trips as travelled to see the chart.</div></div></div><div class="panel"><h2>Journey summary</h2><div class="metric"><span>Saved trips</span><strong id="mSaved">0</strong></div><div class="metric"><span>Completed</span><strong id="mCompleted">0</strong></div><div class="metric"><span>Completion rate</span><strong id="mRate">0%</strong></div><div class="metric"><span>Current battery</span><strong id="mBattery">49%</strong></div><p class="muted">Estimates are based on saved trips, not live vehicle telemetry.</p></div></div>
-</section>
+         <section class="page" id="page-analysis">
+            <div class="pagehead">
+               <div>
+                  <div class="eyebrow">YOUR DRIVING PATTERNS</div>
+                  <h1>Journey analysis</h1>
+                  <p>A summary of your completed journeys.</p>
+               </div>
+            </div>
+            <div class="grid stats">
+               <div class="stat"><label>Completed trips</label><strong id="aTrips">0</strong></div>
+               <div class="stat"><label>Total distance</label><strong><span id="aDistance">0</span><small class="muted">
+                        km</small></strong></div>
+               <div class="stat"><label>Estimated energy</label><strong><span id="aEnergy">0</span><small class="muted">
+                        kWh</small></strong></div>
+               <div class="stat"><label>Average trip</label><strong><span id="aAverage">0</span><small class="muted">
+                        km</small></strong></div>
+            </div>
+            <div class="grid homegrid">
+               <div class="panel">
+                  <h2>Distance by trip</h2>
+                  <div class="muted">Completed journeys</div>
+                  <div class="chart" id="chart">
+                     <div class="empty">Mark trips as travelled to see the chart.</div>
+                  </div>
+               </div>
+               <div class="panel">
+                  <h2>Journey summary</h2>
+                  <div class="metric"><span>Saved trips</span><strong id="mSaved">0</strong></div>
+                  <div class="metric"><span>Completed</span><strong id="mCompleted">0</strong></div>
+                  <div class="metric"><span>Completion rate</span><strong id="mRate">0%</strong></div>
+                  <div class="metric"><span>Current battery</span><strong id="mBattery">49%</strong></div>
+                  <p class="muted">Estimates are based on saved trips, not live vehicle telemetry.</p>
+               </div>
+            </div>
+         </section>
 
-<section class="page" id="page-vehicle">
-<div class="pagehead"><div><div class="eyebrow">PERSONALISE YOUR DRIVE</div><h1>My vehicle</h1><p>Adjust the settings used for your journey estimates.</p></div></div>
-<div class="grid homegrid"><div class="panel" style="text-align:center;background:radial-gradient(ellipse at 70% 20%,#caff551a,transparent 55%),var(--panel)"><div style="font-size:75px;margin:25px">🚙</div><h2 id="vDisplay">My electric vehicle</h2><p id="vMeta">300 km range · 16 kWh/100 km</p></div>
-<div class="panel"><h2>Vehicle settings</h2><div class="field" style="margin-top:18px"><label for="vName">Vehicle nickname</label><input id="vName" value="My electric vehicle"></div><div class="field"><label for="vRange">Range on full charge (km)</label><input id="vRange" type="number" min="20" max="1500" value="300"></div><div class="field"><label for="vConsumption">Consumption (kWh / 100 km)</label><input id="vConsumption" type="number" min="1" max="80" step=".1" value="16"></div><div class="field"><label for="vCapacity">Battery capacity (kWh)</label><input id="vCapacity" type="number" min="1" max="300" value="60"></div><button class="btn primary full" id="saveVehicle">Save vehicle settings</button></div></div>
-</section>
-<footer>VOLTLY EV COMPANION · Plan thoughtfully. Drive electric.</footer>
-</main>
-</div>
+         <section class="page" id="page-vehicle">
+            <div class="pagehead">
+               <div>
+                  <div class="eyebrow">PERSONALISE YOUR DRIVE</div>
+                  <h1>My vehicle</h1>
+                  <p>Adjust the settings used for your journey estimates.</p>
+               </div>
+            </div>
+            <div class="grid homegrid">
+               <div class="panel"
+                  style="text-align:center;background:radial-gradient(ellipse at 70% 20%,#caff551a,transparent 55%),var(--panel)">
+                  <div style="font-size:75px;margin:25px">🚙</div>
+                  <h2 id="vDisplay">My electric vehicle</h2>
+                  <p id="vMeta">300 km range · 16 kWh/100 km</p>
+               </div>
+               <div class="panel">
+                  <h2>Vehicle settings</h2>
+                  <div class="field" style="margin-top:18px"><label for="vName">Vehicle nickname</label><input
+                        id="vName" value="My electric vehicle"></div>
+                  <div class="field"><label for="vRange">Range on full charge (km)</label><input id="vRange"
+                        type="number" min="20" max="1500" value="300"></div>
+                  <div class="field"><label for="vConsumption">Consumption (kWh / 100 km)</label><input
+                        id="vConsumption" type="number" min="1" max="80" step=".1" value="16"></div>
+                  <div class="field"><label for="vCapacity">Battery capacity (kWh)</label><input id="vCapacity"
+                        type="number" min="1" max="300" value="60"></div><button class="btn primary full"
+                     id="saveVehicle">Save vehicle settings</button>
+               </div>
+            </div>
+         </section>
+         <footer>VOLTLY EV COMPANION · Plan thoughtfully. Drive electric.</footer>
+      </main>
+   </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-(() => {
-'use strict';
-const KEY='voltly_companion_v4';
-const defaults={battery:49,vehicle:{name:'My electric vehicle',range:300,consumption:16,capacity:60},trips:[]};
-let state=load(),map,routeLayer,markers=[],routeCoords=[],route=null,chargers=[];
-const $=id=>document.getElementById(id);
-function load(){try{let d=JSON.parse(localStorage.getItem(KEY));if(d)return {...defaults,...d,vehicle:{...defaults.vehicle,...d.vehicle},trips:Array.isArray(d.trips)?d.trips:[]}}catch(e){}return JSON.parse(JSON.stringify(defaults))}
-function save(){localStorage.setItem(KEY,JSON.stringify(state))}
-function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function fmt(n){return Number(n||0).toLocaleString(undefined,{maximumFractionDigits:1})}
-function toast(s){$('notice').style.display='block';$('notice').className='notice';$('notice').textContent=s;setTimeout(()=>$('notice').style.display='none',4500)}
-function error(s){$('notice').style.display='block';$('notice').className='notice error';$('notice').textContent=s}
-function go(name){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id==='page-'+name));document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===name));if(name==='planner'&&map)setTimeout(()=>map.invalidateSize(),150);if(name==='saved')renderTrips();if(name==='analysis')renderAnalysis();window.scrollTo({top:0,behavior:'smooth'})}
-document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>go(b.dataset.page));
-document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
+   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+   <script>
+      (() => {
+         'use strict';
+         const KEY = 'voltly_companion_v4';
+         const defaults = { battery: 49, vehicle: { name: 'My electric vehicle', range: 300, consumption: 16, capacity: 60 }, trips: [] };
+         let state = load(), map, routeLayer, markers = [], routeCoords = [], route = null, chargers = [];
+         const $ = id => document.getElementById(id);
+         function load() { try { let d = JSON.parse(localStorage.getItem(KEY)); if (d) return { ...defaults, ...d, vehicle: { ...defaults.vehicle, ...d.vehicle }, trips: Array.isArray(d.trips) ? d.trips : [] } } catch (e) { } return JSON.parse(JSON.stringify(defaults)) }
+         function save() { localStorage.setItem(KEY, JSON.stringify(state)) }
+         function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])) }
+         function fmt(n) { return Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 1 }) }
+         function toast(s) { $('notice').style.display = 'block'; $('notice').className = 'notice'; $('notice').textContent = s; setTimeout(() => $('notice').style.display = 'none', 4500) }
+         function error(s) { $('notice').style.display = 'block'; $('notice').className = 'notice error'; $('notice').textContent = s }
+         function go(name) { document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + name)); document.querySelectorAll('[data-page]').forEach(b => b.classList.toggle('active', b.dataset.page === name)); if (name === 'planner' && map) setTimeout(() => map.invalidateSize(), 150); if (name === 'saved') renderTrips(); if (name === 'analysis') renderAnalysis(); window.scrollTo({ top: 0, behavior: 'smooth' }) }
+         document.querySelectorAll('[data-page]').forEach(b => b.onclick = () => go(b.dataset.page));
+         document.querySelectorAll('[data-go]').forEach(b => b.onclick = () => go(b.dataset.go));
 
-function initMap(){
- if(!window.L){$('mapStatus').textContent='Map library unavailable';return}
- map=L.map('map').setView([13.0827,80.2707],10);
- L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
- map.on('tileerror',()=>$('mapStatus').textContent='Map tiles need internet');
-}
-function clearMarkers(){if(map)markers.forEach(m=>map.removeLayer(m));markers=[]}
-function addPin(lat,lon,title,detail,color='#caff58'){
- if(!map)return;
- const marker=L.circleMarker([lat,lon],{radius:7,color:'#0b110d',weight:2,fillColor:color,fillOpacity:1}).addTo(map);
- marker.bindPopup('<strong>'+esc(title)+'</strong><br>'+esc(detail||''));markers.push(marker);return marker;
-}
-function clearRoute(){
- if(routeLayer&&map)map.removeLayer(routeLayer);
- routeLayer=null;clearMarkers();routeCoords=[];route=null;chargers=[];
- $('results').classList.remove('show');
- $('stationList').innerHTML='<div class="empty">Calculate a route, then search for charging stations.</div>';
- $('stationStatus').textContent='';$('mapStatus').textContent='Ready';
-}
-async function geocode(q){
- const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(q),{headers:{'Accept-Language':'en'}});
- if(!r.ok)throw Error('Place search is unavailable. Try again shortly.');
- const d=await r.json();
- if(!d.length)throw Error('Could not find "'+q+'". Add a city or area to the name.');
- return {lat:+d[0].lat,lon:+d[0].lon,name:d[0].display_name};
-}
-function estimate(distance,coords,start,dest,method){
- const b=Number($('plannerBattery').value);
- if(!Number.isFinite(b)||b<0||b>100){error('Battery must be between 0 and 100%.');return}
- const energy=distance*state.vehicle.consumption/100;
- const used=energy/state.vehicle.capacity*100;
- route={start,destination:dest,distance,energy,batteryStart:b,batteryAfter:Math.max(0,b-used),travelled:false,createdAt:new Date().toISOString(),method};
- routeCoords=coords||[];
- $('rDistance').textContent=fmt(distance)+' km';$('rEnergy').textContent=fmt(energy)+' kWh';$('rBattery').textContent=fmt(route.batteryAfter)+'%';
- $('rSummary').textContent=route.batteryAfter<15?'Battery may be low after this trip. Plan charging stops before leaving.':'Estimated energy only; actual consumption varies with conditions.';
- $('results').classList.add('show');
- if(map&&coords&&coords.length){
-  if(routeLayer)map.removeLayer(routeLayer);clearMarkers();
-  routeLayer=L.polyline(coords,{color:'#caff58',weight:5,opacity:.95}).addTo(map);
-  addPin(coords[0][0],coords[0][1],'Starting point',start,'#8bd8ff');
-  addPin(coords[coords.length-1][0],coords[coords.length-1][1],'Destination',dest,'#ffffff');
-  map.fitBounds(routeLayer.getBounds(),{padding:[25,25]});$('mapStatus').textContent='Road route calculated';
- }else if(map){$('mapStatus').textContent='Manual distance estimate'}
- $('stationList').innerHTML='<div class="empty">Select “Find charging stations” to search near the route and endpoints.</div>';
- $('stationStatus').textContent='';
-}
-$('calculate').onclick=async()=>{
- const s=$('start').value.trim(),d=$('destination').value.trim();
- if(!s||!d){error('Enter both a starting point and a destination.');return}
- const btn=$('calculate');btn.disabled=true;btn.textContent='Finding route…';$('mapStatus').textContent='Searching';
- try{
-  const [a,b]=await Promise.all([geocode(s),geocode(d)]);
-  const url=`https://router.project-osrm.org/route/v1/driving/${a.lon},${a.lat};${b.lon},${b.lat}?overview=full&geometries=geojson`;
-  const r=await fetch(url);if(!r.ok)throw Error('Road route service is temporarily unavailable.');
-  const data=await r.json();if(data.code!=='Ok'||!data.routes?.length)throw Error('No road route found. Try more specific place names.');
-  estimate(data.routes[0].distance/1000,data.routes[0].geometry.coordinates.map(c=>[c[1],c[0]]),s,d,'road');
- }catch(e){error(e.message+' You can still enter a distance manually.');$('mapStatus').textContent='Route unavailable'}
- finally{btn.disabled=false;btn.textContent='✦ Calculate route'}
-};
-$('useDistance').onclick=()=>{
- const d=Number($('manualDistance').value);
- if(!Number.isFinite(d)||d<=0){error('Enter a distance greater than zero.');return}
- estimate(d,null,$('start').value.trim()||'Manual start',$('destination').value.trim()||'Manual destination','manual');
- toast('Estimate calculated. Calculate a road route to search stations along the road.');
-};
-$('clear').onclick=()=>{$('start').value='';$('destination').value='';$('manualDistance').value='';clearRoute()};
+         function initMap() {
+            if (!window.L) { $('mapStatus').textContent = 'Map library unavailable'; return }
+            map = L.map('map').setView([13.0827, 80.2707], 10);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
+            map.on('tileerror', () => $('mapStatus').textContent = 'Map tiles need internet');
+         }
+         function clearMarkers() { if (map) markers.forEach(m => map.removeLayer(m)); markers = [] }
+         function addPin(lat, lon, title, detail, color = '#caff58') {
+            if (!map) return;
+            const icon = L.divIcon({ className: '', html: `<div style="width:14px;height:14px;border-radius:50%;background:${color};border:2px solid #0b110d;box-shadow:0 0 4px #0006;"></div>`, iconSize: [14, 14], iconAnchor: [7, 7], popupAnchor: [0, -7] });
+            const marker = L.marker([lat, lon], { icon }).addTo(map);
+            marker.bindPopup('<strong>' + esc(title) + '</strong><br>' + esc(detail || '')); markers.push(marker); return marker;
+         }
+         function clearRoute() {
+            if (routeLayer && map) map.removeLayer(routeLayer);
+            routeLayer = null; clearMarkers(); routeCoords = []; route = null; chargers = [];
+            $('results').classList.remove('show');
+            $('stationList').innerHTML = '<div class="empty">Calculate a route, then search for charging stations.</div>';
+            $('stationStatus').textContent = ''; $('mapStatus').textContent = 'Ready';
+         }
+         async function geocode(q) {
+            const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(q), { headers: { 'Accept-Language': 'en' } });
+            if (!r.ok) throw Error('Place search is unavailable. Try again shortly.');
+            const d = await r.json();
+            if (!d.length) throw Error('Could not find "' + q + '". Add a city or area to the name.');
+            return { lat: +d[0].lat, lon: +d[0].lon, name: d[0].display_name };
+         }
+         function estimate(distance, coords, start, dest, method) {
+            const b = Number($('plannerBattery').value);
+            if (!Number.isFinite(b) || b < 0 || b > 100) { error('Battery must be between 0 and 100%.'); return }
+            const energy = distance * state.vehicle.consumption / 100;
+            const used = energy / state.vehicle.capacity * 100;
+            route = { start, destination: dest, distance, energy, batteryStart: b, batteryAfter: Math.max(0, b - used), travelled: false, createdAt: new Date().toISOString(), method };
+            routeCoords = coords || [];
+            $('rDistance').textContent = fmt(distance) + ' km'; $('rEnergy').textContent = fmt(energy) + ' kWh'; $('rBattery').textContent = fmt(route.batteryAfter) + '%';
+            $('rSummary').textContent = route.batteryAfter < 15 ? 'Battery may be low after this trip. Plan charging stops before leaving.' : 'Estimated energy only; actual consumption varies with conditions.';
+            $('results').classList.add('show');
+            if (map && coords && coords.length) {
+               if (routeLayer) map.removeLayer(routeLayer); clearMarkers();
+               routeLayer = L.polyline(coords, { color: '#caff58', weight: 5, opacity: .95 }).addTo(map);
+               addPin(coords[0][0], coords[0][1], 'Starting point', start, '#8bd8ff');
+               addPin(coords[coords.length - 1][0], coords[coords.length - 1][1], 'Destination', dest, '#ffffff');
+               map.fitBounds(routeLayer.getBounds(), { padding: [25, 25] }); $('mapStatus').textContent = 'Road route calculated';
+            } else if (map) { $('mapStatus').textContent = 'Manual distance estimate' }
+            $('stationList').innerHTML = '<div class="empty">Select “Find charging stations” to search near the route and endpoints.</div>';
+            $('stationStatus').textContent = '';
+         }
+         $('calculate').onclick = async () => {
+            const s = $('start').value.trim(), d = $('destination').value.trim();
+            if (!s || !d) { error('Enter both a starting point and a destination.'); return }
+            const btn = $('calculate'); btn.disabled = true; btn.textContent = 'Finding route…'; $('mapStatus').textContent = 'Searching';
+            try {
+               const [a, b] = await Promise.all([geocode(s), geocode(d)]);
+               const url = `https://router.project-osrm.org/route/v1/driving/${a.lon},${a.lat};${b.lon},${b.lat}?overview=full&geometries=geojson`;
+               const r = await fetch(url); if (!r.ok) throw Error('Road route service is temporarily unavailable.');
+               const data = await r.json(); if (data.code !== 'Ok' || !data.routes?.length) throw Error('No road route found. Try more specific place names.');
+               estimate(data.routes[0].distance / 1000, data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]), s, d, 'road');
+            } catch (e) { error(e.message + ' You can still enter a distance manually.'); $('mapStatus').textContent = 'Route unavailable' }
+            finally { btn.disabled = false; btn.textContent = '✦ Calculate route' }
+         };
+         $('useDistance').onclick = () => {
+            const d = Number($('manualDistance').value);
+            if (!Number.isFinite(d) || d <= 0) { error('Enter a distance greater than zero.'); return }
+            estimate(d, null, $('start').value.trim() || 'Manual start', $('destination').value.trim() || 'Manual destination', 'manual');
+            toast('Estimate calculated. Calculate a road route to search stations along the road.');
+         };
+         $('clear').onclick = () => { $('start').value = ''; $('destination').value = ''; $('manualDistance').value = ''; clearRoute() };
 
-/* CHARGING STATIONS: query public OpenStreetMap data around the whole route.
-   The corridor is deliberately widened to include stations near both endpoints. */
-async function queryStations(bounds){
- const query=`[out:json][timeout:40];(
+         /* CHARGING STATIONS
+            Primary: Open Charge Map (OCM) API — better India coverage.
+            Fallback: OpenStreetMap Overpass API. */
+         const OCM_KEY = '17116bd0-921b-47d9-b10b-02434049ad26';
+
+         async function fetchOCMStations(centerLat, centerLon, radiusKm) {
+            const url = new URL('https://api.openchargemap.io/v3/poi/');
+            url.searchParams.set('output', 'json');
+            url.searchParams.set('latitude', centerLat);
+            url.searchParams.set('longitude', centerLon);
+            url.searchParams.set('distance', Math.max(5, Math.ceil(radiusKm)));
+            url.searchParams.set('distanceunit', 'KM');
+            url.searchParams.set('maxresults', '200');
+            url.searchParams.set('compact', 'false');
+            url.searchParams.set('verbose', 'false');
+            url.searchParams.set('key', OCM_KEY);
+            const ctrl = new AbortController();
+            const timer = setTimeout(() => ctrl.abort(), 20000);
+            try {
+               const r = await fetch(url.toString(), { signal: ctrl.signal, headers: { 'Accept': 'application/json' } });
+               clearTimeout(timer);
+               if (r.status === 401 || r.status === 403) throw Error('OCM API key rejected.');
+               if (!r.ok) throw Error('OCM returned status ' + r.status);
+               const data = await r.json();
+               if (!Array.isArray(data)) return [];
+               return data.map(poi => {
+                  const info = poi.AddressInfo || {};
+                  const lat = Number(info.Latitude), lon = Number(info.Longitude);
+                  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+                  const conns = Array.isArray(poi.Connections) ? poi.Connections : [];
+                  const tags = {};
+                  tags.name = info.Title || poi.OperatorInfo?.Title || 'EV charging station';
+                  tags.operator = poi.OperatorInfo?.Title || 'Operator not listed';
+                  tags['addr:street'] = info.AddressLine1 || '';
+                  tags['addr:city'] = info.Town || info.StateOrProvince || '';
+                  let maxKw = 0;
+                  conns.forEach(c => {
+                     const t = ((c.ConnectionType?.FormalName || '') + ' ' + (c.ConnectionType?.Title || '')).toLowerCase();
+                     const q = Number(c.Quantity) || 1;
+                     const key = t.includes('chademo') ? 'socket:chademo'
+                        : t.includes('ccs') ? 'socket:type2_combo'
+                           : (t.includes('type 2') || t.includes('mennekes')) ? 'socket:type2'
+                              : t.includes('type 1') ? 'socket:type1' : null;
+                     if (key) tags[key] = String((Number(tags[key] || 0)) + q);
+                     maxKw = Math.max(maxKw, Number(c.PowerKW) || 0);
+                  });
+                  if (maxKw > 0) tags['socket:output'] = Math.round(maxKw) + ' kW';
+                  return { lat, lon, tags };
+               }).filter(Boolean);
+            } catch (e) {
+               clearTimeout(timer);
+               if (e.name === 'AbortError') throw Error('Open Charge Map timed out.');
+               throw e;
+            }
+         }
+
+         async function queryStations(bounds) {
+            const query = `[out:json][timeout:35];(
  node["amenity"="charging_station"](${bounds.south},${bounds.west},${bounds.north},${bounds.east});
  way["amenity"="charging_station"](${bounds.south},${bounds.west},${bounds.north},${bounds.east});
  relation["amenity"="charging_station"](${bounds.south},${bounds.west},${bounds.north},${bounds.east});
 );out center tags;`;
- let last;
- for(const endpoint of ['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter']){
-  try{
-   const r=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:'data='+encodeURIComponent(query)});
-   if(!r.ok)throw Error('Public charging-station data service is busy.');
-   const data=await r.json();return data.elements||[];
-  }catch(e){last=e}
- }
- throw last||Error('Charging-station service is unavailable.');
-}
-function distanceToRouteKm(lat,lon,path){
- let best=Infinity;
- for(const p of path){
-  const dy=(p[0]-lat)*111.32,dx=(p[1]-lon)*111.32*Math.cos(lat*Math.PI/180);
-  best=Math.min(best,Math.hypot(dx,dy));
- }
- return best;
-}
-async function findChargers(){
- if(!routeCoords.length){
-  error('Calculate a road route first. Manual distance alone cannot show the actual road or search along it.');
-  return;
- }
- const btn=$('findChargers');btn.disabled=true;btn.textContent='Searching stations…';
- $('stationStatus').textContent='Searching public map data along the route…';
- $('stationList').innerHTML='<div class="empty">Searching…</div>';
- try{
-  const lats=routeCoords.map(p=>p[0]),lons=routeCoords.map(p=>p[1]);
-  // About 13 km of extra margin around the route bounding box.
-  const bounds={south:Math.min(...lats)-.12,north:Math.max(...lats)+.12,west:Math.min(...lons)-.12,east:Math.max(...lons)+.12};
-  const elements=await queryStations(bounds);
-  const path=routeCoords.filter((_,i)=>i%Math.max(1,Math.floor(routeCoords.length/180))===0);
-  if(path.length===0)throw Error('No route coordinates are available.');
-  let all=elements.map(e=>({lat:e.lat??e.center?.lat,lon:e.lon??e.center?.lon,tags:e.tags||{}})).filter(e=>Number.isFinite(e.lat)&&Number.isFinite(e.lon));
-  // Keep stations within 12 km of the road. This also includes endpoint stations.
-  chargers=all.map(c=>({...c,nearRoute:distanceToRouteKm(c.lat,c.lon,path)})).filter(c=>c.nearRoute<=12).sort((a,b)=>a.nearRoute-b.nearRoute);
-  const seen=new Set();
-  chargers=chargers.filter(c=>{const k=c.lat.toFixed(4)+','+c.lon.toFixed(4);if(seen.has(k))return false;seen.add(k);return true}).slice(0,100);
-  clearMarkers();
-  if(routeLayer)routeLayer.addTo(map);
-  addPin(routeCoords[0][0],routeCoords[0][1],'Starting point',route.start,'#8bd8ff');
-  addPin(routeCoords[routeCoords.length-1][0],routeCoords[routeCoords.length-1][1],'Destination',route.destination,'#ffffff');
-  chargers.forEach(c=>{
-   const name=c.tags.name||c.tags.operator||'EV charging station';
-   const connector=connectorInfo(c.tags);
-   addPin(c.lat,c.lon,'⚡ '+name,connector+' · '+fmt(c.nearRoute)+' km from route','#caff58');
-  });
-  if(chargers.length){
-   $('stationStatus').textContent=`Found ${chargers.length} mapped charging station(s) within approximately 12 km of the route.`;
-   $('stationList').innerHTML=chargers.map(c=>{
-    const name=c.tags.name||c.tags.operator||'EV charging station';
-    const address=[c.tags['addr:street'],c.tags['addr:city']].filter(Boolean).join(', ');
-    const connector=connectorInfo(c.tags);
-    const status=c.tags['opening_hours']?'Opening hours: '+c.tags['opening_hours']:'Live status not available';
-    const url=`https://www.openstreetmap.org/?mlat=${c.lat}&mlon=${c.lon}#map=17/${c.lat}/${c.lon}`;
-    return `<div class="station"><strong>⚡ ${esc(name)}</strong><p>${esc(address||'Address not listed')}</p><p>${esc(connector)}</p><p>Approx. ${fmt(c.nearRoute)} km from road · ${esc(status)}</p><a href="${url}" target="_blank" rel="noopener">Open station on map ↗</a></div>`;
-   }).join('');
-  }else{
-   $('stationStatus').textContent='No charging stations were found in the public data around this route.';
-   $('stationList').innerHTML='<div class="empty">No mapped stations found. The map data may be incomplete; try again later.</div>';
-  }
-  $('mapStatus').textContent=chargers.length+' station(s) found';
-  if(chargers.length){
-   const group=L.featureGroup([routeLayer,...markers]);map.fitBounds(group.getBounds(),{padding:[25,25],maxZoom:12});
-  }
- }catch(e){
-  $('stationStatus').textContent=e.message;
-  $('stationList').innerHTML='<div class="empty">The public station service may be busy or unavailable. Try again later.</div>';
- }finally{btn.disabled=false;btn.textContent='⚡ Find charging stations'}
-}
-function connectorInfo(tags){
- const items=Object.keys(tags).filter(k=>k.startsWith('socket:')&&tags[k]&&tags[k]!=='no').map(k=>k.replace('socket:','')+(tags[k]!=='yes'?' × '+tags[k]:''));
- if(tags.socket_type)return 'Connector: '+tags.socket_type;
- if(items.length)return 'Connectors: '+items.join(', ');
- return 'Connector details not listed';
-}
-$('findChargers').onclick=findChargers;
+            const endpoints = [
+               'https://overpass-api.de/api/interpreter',
+               'https://overpass.kumi.systems/api/interpreter',
+               'https://overpass.private.coffee/api/interpreter'
+            ];
+            let last;
+            for (let i = 0; i < endpoints.length; i++) {
+               const endpoint = endpoints[i];
+               $('stationStatus').textContent = `Querying charging data (server ${i + 1} of ${endpoints.length})…`;
+               const ctrl = new AbortController();
+               const timer = setTimeout(() => ctrl.abort(), 30000);
+               try {
+                  const r = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' }, body: 'data=' + encodeURIComponent(query), signal: ctrl.signal });
+                  clearTimeout(timer);
+                  if (!r.ok) throw Error('Charging data server returned an error (' + r.status + ').');
+                  const data = await r.json(); return data.elements || [];
+               } catch (e) {
+                  clearTimeout(timer);
+                  if (e.name === 'AbortError') last = Error('Server ' + endpoint.split('/')[2] + ' timed out. Trying next…');
+                  else last = e;
+                  console.warn('Overpass attempt failed:', endpoint, last.message);
+               }
+            }
+            throw last || Error('All charging-station servers are unavailable. Check your internet connection and try again.');
+         }
+         function distanceToRouteKm(lat, lon, path) {
+            let best = Infinity;
+            for (const p of path) {
+               const dy = (p[0] - lat) * 111.32, dx = (p[1] - lon) * 111.32 * Math.cos(lat * Math.PI / 180);
+               best = Math.min(best, Math.hypot(dx, dy));
+            }
+            return best;
+         }
+         async function findChargers() {
+            if (!routeCoords.length) {
+               error('Calculate a road route first. Manual distance alone cannot show the actual road or search along it.');
+               return;
+            }
+            const btn = $('findChargers'); btn.disabled = true; btn.textContent = 'Searching stations…';
+            $('stationStatus').textContent = 'Searching public map data along the route…';
+            $('stationList').innerHTML = '<div class="empty">Searching…</div>';
+            try {
+               const lats = routeCoords.map(p => p[0]), lons = routeCoords.map(p => p[1]);
+               const bounds = { south: Math.min(...lats) - .12, north: Math.max(...lats) + .12, west: Math.min(...lons) - .12, east: Math.max(...lons) + .12 };
+               const centerLat = (bounds.south + bounds.north) / 2;
+               const centerLon = (bounds.west + bounds.east) / 2;
+               // Diagonal half-distance + 10 km buffer as OCM radius
+               const radiusKm = Math.hypot((bounds.north - bounds.south) * 111.32, (bounds.east - bounds.west) * 111.32 * Math.cos(centerLat * Math.PI / 180)) / 2 + 10;
 
-function saveCurrent(travelled){
- if(!route){toast('Calculate a route first.');return}
- state.trips.unshift({...route,id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),travelled:!!travelled});
- save();renderAll();toast(travelled?'Trip saved as travelled.':'Trip saved.');
-}
-$('saveTrip').onclick=()=>saveCurrent(false);
-$('markTravelled').onclick=()=>saveCurrent(true);
+               let elements;
+               try {
+                  $('stationStatus').textContent = 'Fetching charging stations from Open Charge Map…';
+                  const ocmResults = await fetchOCMStations(centerLat, centerLon, radiusKm);
+                  elements = ocmResults; // already {lat,lon,tags} — skip center-unwrap step
+               } catch (ocmErr) {
+                  console.warn('OCM failed, trying Overpass:', ocmErr.message);
+                  $('stationStatus').textContent = 'Open Charge Map unavailable, trying OpenStreetMap…';
+                  const raw = await queryStations(bounds);
+                  elements = raw.map(e => ({ lat: e.lat ?? e.center?.lat, lon: e.lon ?? e.center?.lon, tags: e.tags || {} })).filter(e => Number.isFinite(e.lat) && Number.isFinite(e.lon));
+               }
 
-function card(t){return `<div class="trip"><div><strong>${esc(t.start)} <span class="accent">→</span> ${esc(t.destination)}</strong><p>${fmt(t.distance)} km · ${fmt(t.energy)} kWh estimated · ${t.travelled?'✓ Travelled':'Planned'}</p><p>${new Date(t.createdAt).toLocaleDateString()}</p></div><div class="tripactions"><button class="btn" data-use="${esc(t.id)}">Use again</button><button class="btn" data-toggle="${esc(t.id)}">${t.travelled?'Mark planned':'Travelled'}</button><button class="btn" data-delete="${esc(t.id)}">Remove</button></div></div>`}
-function renderTrips(){
- const q=($('tripSearch')?.value||'').toLowerCase(),f=$('tripFilter')?.value||'all';
- const list=state.trips.filter(t=>(f==='all'||(f==='travelled'?t.travelled:!t.travelled))&&(`${t.start} ${t.destination}`.toLowerCase().includes(q)));
- $('savedList').innerHTML=list.length?list.map(card).join(''):'<div class="empty">No matching trips. Plan and save a route first.</div>';
- $('recentTrips').innerHTML=state.trips.slice(0,3).map(card).join('')||'<div class="empty">No saved journeys yet.</div>';
- document.querySelectorAll('[data-use]').forEach(b=>b.onclick=()=>{
-  const t=state.trips.find(x=>x.id===b.dataset.use);if(!t)return;
-  $('start').value=t.start;$('destination').value=t.destination;$('plannerBattery').value=t.batteryStart;
-  go('planner');estimate(t.distance,null,t.start,t.destination,'saved');
-  toast('Saved trip loaded. Calculate the route to display the road line and search stations.');
- });
- document.querySelectorAll('[data-toggle]').forEach(b=>b.onclick=()=>{const t=state.trips.find(x=>x.id===b.dataset.toggle);if(t){t.travelled=!t.travelled;save();renderAll()}});
- document.querySelectorAll('[data-delete]').forEach(b=>b.onclick=()=>{state.trips=state.trips.filter(x=>x.id!==b.dataset.delete);save();renderAll()});
- $('homeTrips').textContent=state.trips.length;
- $('homeDistance').textContent=fmt(state.trips.filter(t=>t.travelled).reduce((s,t)=>s+t.distance,0));
-}
-$('tripSearch').oninput=renderTrips;$('tripFilter').onchange=renderTrips;
-$('exportCsv').onclick=()=>{
- if(!state.trips.length){toast('No trips to export.');return}
- const rows=[['Start','Destination','Distance km','Energy kWh','Battery start','Battery after','Status','Created'],...state.trips.map(t=>[t.start,t.destination,t.distance,t.energy,t.batteryStart,t.batteryAfter,t.travelled?'Travelled':'Planned',t.createdAt])];
- const csv=rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');
- const a=document.createElement('a'),u=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.href=u;a.download='voltly-trips.csv';a.click();URL.revokeObjectURL(u);
-};
-function renderAnalysis(){
- const c=state.trips.filter(t=>t.travelled),d=c.reduce((s,t)=>s+t.distance,0),e=c.reduce((s,t)=>s+t.energy,0);
- $('aTrips').textContent=c.length;$('aDistance').textContent=fmt(d);$('aEnergy').textContent=fmt(e);$('aAverage').textContent=fmt(c.length?d/c.length:0);
- $('mSaved').textContent=state.trips.length;$('mCompleted').textContent=c.length;$('mRate').textContent=(state.trips.length?Math.round(c.length/state.trips.length*100):0)+'%';$('mBattery').textContent=state.battery+'%';
- const data=c.slice(0,6).reverse(),max=Math.max(1,...data.map(t=>t.distance));
- $('chart').innerHTML=data.length?data.map(t=>`<div class="barcol"><div class="bar" style="height:${Math.max(3,t.distance/max*78)}%"><span>${fmt(t.distance)}</span></div><small>${esc(t.destination.split(',')[0].slice(0,9))}</small></div>`).join(''):'<div class="empty" style="width:100%">Mark trips as travelled to see the chart.</div>';
-}
-function renderVehicle(){
- const v=state.vehicle;$('vName').value=v.name;$('vRange').value=v.range;$('vConsumption').value=v.consumption;$('vCapacity').value=v.capacity;
- $('vDisplay').textContent=v.name;$('vMeta').textContent=`${fmt(v.range)} km range · ${fmt(v.consumption)} kWh/100 km`;
-}
-$('saveVehicle').onclick=()=>{
- const v={name:$('vName').value.trim()||'My electric vehicle',range:+$('vRange').value,consumption:+$('vConsumption').value,capacity:+$('vCapacity').value};
- if(v.range<20||v.range>1500||v.consumption<1||v.consumption>80||v.capacity<1||v.capacity>300){toast('Check the vehicle values.');return}
- state.vehicle=v;save();renderAll();toast('Vehicle settings saved.');
-};
-function renderBattery(){
- const b=state.battery,range=state.vehicle.range*b/100;
- $('homeBattery').textContent=b;$('ringBattery').textContent=b;$('sideBattery').textContent=b;$('batteryInput').value=b;$('plannerBattery').value=b;
- $('batteryRing').style.background=`conic-gradient(var(--lime) ${b*3.6}deg,#344236 0)`;
- $('homeProgress').style.width=b+'%';$('sideProgress').style.width=b+'%';
- $('homeRange').textContent=fmt(range);$('remainingRange').textContent=fmt(range);
- $('batteryMessage').textContent=b<=15?'Low battery — plan a charge':'Ready for the road';
- $('batteryDesc').textContent=b<=15?'Consider charging before a long journey.':'Your battery setting is saved locally.';
-}
-$('saveBattery').onclick=()=>{
- const b=Number($('batteryInput').value);
- if(!Number.isFinite(b)||b<0||b>100){toast('Enter a battery value between 0 and 100.');return}
- state.battery=Math.round(b);save();renderAll();toast('Battery updated.');
-};
-function renderAll(){renderBattery();renderVehicle();renderTrips();renderAnalysis()}
-initMap();renderAll();
-})();
-</script>
+               const path = routeCoords.filter((_, i) => i % Math.max(1, Math.floor(routeCoords.length / 180)) === 0);
+               if (path.length === 0) throw Error('No route coordinates are available.');
+               let all = elements.filter(e => Number.isFinite(e.lat) && Number.isFinite(e.lon));
+               // Keep stations within 12 km of the road. This also includes endpoint stations.
+               chargers = all.map(c => ({ ...c, nearRoute: distanceToRouteKm(c.lat, c.lon, path) })).filter(c => c.nearRoute <= 12).sort((a, b) => a.nearRoute - b.nearRoute);
+               const seen = new Set();
+               chargers = chargers.filter(c => { const k = c.lat.toFixed(4) + ',' + c.lon.toFixed(4); if (seen.has(k)) return false; seen.add(k); return true }).slice(0, 100);
+               clearMarkers();
+               if (routeLayer && !map.hasLayer(routeLayer)) routeLayer.addTo(map);
+               addPin(routeCoords[0][0], routeCoords[0][1], 'Starting point', route.start, '#8bd8ff');
+               addPin(routeCoords[routeCoords.length - 1][0], routeCoords[routeCoords.length - 1][1], 'Destination', route.destination, '#ffffff');
+               chargers.forEach(c => {
+                  const name = c.tags.name || c.tags.operator || 'EV charging station';
+                  const connector = connectorInfo(c.tags);
+                  addPin(c.lat, c.lon, '⚡ ' + name, connector + ' · ' + fmt(c.nearRoute) + ' km from route', '#caff58');
+               });
+               if (chargers.length) {
+                  $('stationStatus').textContent = `Found ${chargers.length} mapped charging station(s) within approximately 12 km of the route.`;
+                  $('stationList').innerHTML = chargers.map(c => {
+                     const name = c.tags.name || c.tags.operator || 'EV charging station';
+                     const address = [c.tags['addr:street'], c.tags['addr:city']].filter(Boolean).join(', ');
+                     const connector = connectorInfo(c.tags);
+                     const status = c.tags['opening_hours'] ? 'Opening hours: ' + c.tags['opening_hours'] : 'Live status not available';
+                     const url = `https://www.openstreetmap.org/?mlat=${c.lat}&mlon=${c.lon}#map=17/${c.lat}/${c.lon}`;
+                     return `<div class="station"><strong>⚡ ${esc(name)}</strong><p>${esc(address || 'Address not listed')}</p><p>${esc(connector)}</p><p>Approx. ${fmt(c.nearRoute)} km from road · ${esc(status)}</p><a href="${url}" target="_blank" rel="noopener">Open station on map ↗</a></div>`;
+                  }).join('');
+               } else {
+                  $('stationStatus').textContent = 'No charging stations were found in the public data around this route.';
+                  $('stationList').innerHTML = '<div class="empty">No mapped stations found. The map data may be incomplete; try again later.</div>';
+               }
+               $('mapStatus').textContent = chargers.length + ' station(s) found';
+               if (chargers.length && markers.length) {
+                  try {
+                     const allLayers = [...markers];
+                     if (routeLayer && map.hasLayer(routeLayer)) allLayers.push(routeLayer);
+                     map.fitBounds(L.featureGroup(allLayers).getBounds(), { padding: [25, 25], maxZoom: 14 });
+                  } catch (_) { }
+               }
+            } catch (e) {
+               $('stationStatus').textContent = e.message;
+               $('stationList').innerHTML = '<div class="empty">The public station service may be busy or unavailable. Try again later.</div>';
+            } finally { btn.disabled = false; btn.textContent = '⚡ Find charging stations' }
+         }
+         function connectorInfo(tags) {
+            const items = Object.keys(tags).filter(k => k.startsWith('socket:') && tags[k] && tags[k] !== 'no').map(k => k.replace('socket:', '') + (tags[k] !== 'yes' ? ' × ' + tags[k] : ''));
+            if (tags.socket_type) return 'Connector: ' + tags.socket_type;
+            if (items.length) return 'Connectors: ' + items.join(', ');
+            return 'Connector details not listed';
+         }
+         $('findChargers').onclick = findChargers;
+
+         function saveCurrent(travelled) {
+            if (!route) { toast('Calculate a route first.'); return }
+            state.trips.unshift({ ...route, id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), travelled: !!travelled });
+            save(); renderAll(); toast(travelled ? 'Trip saved as travelled.' : 'Trip saved.');
+         }
+         $('saveTrip').onclick = () => saveCurrent(false);
+         $('markTravelled').onclick = () => saveCurrent(true);
+
+         function card(t) { return `<div class="trip"><div><strong>${esc(t.start)} <span class="accent">→</span> ${esc(t.destination)}</strong><p>${fmt(t.distance)} km · ${fmt(t.energy)} kWh estimated · ${t.travelled ? '✓ Travelled' : 'Planned'}</p><p>${new Date(t.createdAt).toLocaleDateString()}</p></div><div class="tripactions"><button class="btn" data-use="${esc(t.id)}">Use again</button><button class="btn" data-toggle="${esc(t.id)}">${t.travelled ? 'Mark planned' : 'Travelled'}</button><button class="btn" data-delete="${esc(t.id)}">Remove</button></div></div>` }
+         function renderTrips() {
+            const q = ($('tripSearch')?.value || '').toLowerCase(), f = $('tripFilter')?.value || 'all';
+            const list = state.trips.filter(t => (f === 'all' || (f === 'travelled' ? t.travelled : !t.travelled)) && (`${t.start} ${t.destination}`.toLowerCase().includes(q)));
+            $('savedList').innerHTML = list.length ? list.map(card).join('') : '<div class="empty">No matching trips. Plan and save a route first.</div>';
+            $('recentTrips').innerHTML = state.trips.slice(0, 3).map(card).join('') || '<div class="empty">No saved journeys yet.</div>';
+            document.querySelectorAll('[data-use]').forEach(b => b.onclick = () => {
+               const t = state.trips.find(x => x.id === b.dataset.use); if (!t) return;
+               $('start').value = t.start; $('destination').value = t.destination; $('plannerBattery').value = t.batteryStart;
+               go('planner'); estimate(t.distance, null, t.start, t.destination, 'saved');
+               toast('Saved trip loaded. Calculate the route to display the road line and search stations.');
+            });
+            document.querySelectorAll('[data-toggle]').forEach(b => b.onclick = () => { const t = state.trips.find(x => x.id === b.dataset.toggle); if (t) { t.travelled = !t.travelled; save(); renderAll() } });
+            document.querySelectorAll('[data-delete]').forEach(b => b.onclick = () => { state.trips = state.trips.filter(x => x.id !== b.dataset.delete); save(); renderAll() });
+            $('homeTrips').textContent = state.trips.length;
+            $('homeDistance').textContent = fmt(state.trips.filter(t => t.travelled).reduce((s, t) => s + t.distance, 0));
+         }
+         $('tripSearch').oninput = renderTrips; $('tripFilter').onchange = renderTrips;
+         $('exportCsv').onclick = () => {
+            if (!state.trips.length) { toast('No trips to export.'); return }
+            const rows = [['Start', 'Destination', 'Distance km', 'Energy kWh', 'Battery start', 'Battery after', 'Status', 'Created'], ...state.trips.map(t => [t.start, t.destination, t.distance, t.energy, t.batteryStart, t.batteryAfter, t.travelled ? 'Travelled' : 'Planned', t.createdAt])];
+            const csv = rows.map(r => r.map(v => '"' + String(v ?? '').replace(/"/g, '""') + '"').join(',')).join('\r\n');
+            const a = document.createElement('a'), u = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.href = u; a.download = 'voltly-trips.csv'; a.click(); URL.revokeObjectURL(u);
+         };
+         function renderAnalysis() {
+            const c = state.trips.filter(t => t.travelled), d = c.reduce((s, t) => s + t.distance, 0), e = c.reduce((s, t) => s + t.energy, 0);
+            $('aTrips').textContent = c.length; $('aDistance').textContent = fmt(d); $('aEnergy').textContent = fmt(e); $('aAverage').textContent = fmt(c.length ? d / c.length : 0);
+            $('mSaved').textContent = state.trips.length; $('mCompleted').textContent = c.length; $('mRate').textContent = (state.trips.length ? Math.round(c.length / state.trips.length * 100) : 0) + '%'; $('mBattery').textContent = state.battery + '%';
+            const data = c.slice(0, 6).reverse(), max = Math.max(1, ...data.map(t => t.distance));
+            $('chart').innerHTML = data.length ? data.map(t => `<div class="barcol"><div class="bar" style="height:${Math.max(3, t.distance / max * 78)}%"><span>${fmt(t.distance)}</span></div><small>${esc(t.destination.split(',')[0].slice(0, 9))}</small></div>`).join('') : '<div class="empty" style="width:100%">Mark trips as travelled to see the chart.</div>';
+         }
+         function renderVehicle() {
+            const v = state.vehicle; $('vName').value = v.name; $('vRange').value = v.range; $('vConsumption').value = v.consumption; $('vCapacity').value = v.capacity;
+            $('vDisplay').textContent = v.name; $('vMeta').textContent = `${fmt(v.range)} km range · ${fmt(v.consumption)} kWh/100 km`;
+         }
+         $('saveVehicle').onclick = () => {
+            const v = { name: $('vName').value.trim() || 'My electric vehicle', range: +$('vRange').value, consumption: +$('vConsumption').value, capacity: +$('vCapacity').value };
+            if (v.range < 20 || v.range > 1500 || v.consumption < 1 || v.consumption > 80 || v.capacity < 1 || v.capacity > 300) { toast('Check the vehicle values.'); return }
+            state.vehicle = v; save(); renderAll(); toast('Vehicle settings saved.');
+         };
+         function renderBattery() {
+            const b = state.battery, range = state.vehicle.range * b / 100;
+            $('homeBattery').textContent = b; $('ringBattery').textContent = b; $('sideBattery').textContent = b; $('batteryInput').value = b; $('plannerBattery').value = b;
+            $('batteryRing').style.background = `conic-gradient(var(--lime) ${b * 3.6}deg,#344236 0)`;
+            $('homeProgress').style.width = b + '%'; $('sideProgress').style.width = b + '%';
+            $('homeRange').textContent = fmt(range); $('remainingRange').textContent = fmt(range);
+            $('batteryMessage').textContent = b <= 15 ? 'Low battery — plan a charge' : 'Ready for the road';
+            $('batteryDesc').textContent = b <= 15 ? 'Consider charging before a long journey.' : 'Your battery setting is saved locally.';
+         }
+         $('saveBattery').onclick = () => {
+            const b = Number($('batteryInput').value);
+            if (!Number.isFinite(b) || b < 0 || b > 100) { toast('Enter a battery value between 0 and 100.'); return }
+            state.battery = Math.round(b); save(); renderAll(); toast('Battery updated.');
+         };
+         function renderAll() { renderBattery(); renderVehicle(); renderTrips(); renderAnalysis() }
+         initMap(); renderAll();
+      })();
+   </script>
 </body>
+
 </html>
