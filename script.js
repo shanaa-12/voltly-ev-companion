@@ -599,6 +599,7 @@ const OVERPASS_ENDPOINTS = [
     "(around:5000,13.08,80.27)"
     "(around:5000,lat1,lon1,lat2,lon2,...)"   <- polyline = along a route
 */
+
 async function runOverpass(clauses, signal) {
   const parts = clauses.flatMap(clause => [
     `node["amenity"="charging_station"]${clause};`,
@@ -606,12 +607,27 @@ async function runOverpass(clauses, signal) {
     `relation["amenity"="charging_station"]${clause};`
   ]);
 
-  const query = `[out:json][timeout:40];(${parts.join("")});out center tags;`;
-
+  const query = `[out:json][timeout:18];(${parts.join("")});out center tags;`;
   let lastError = null;
 
   for (const endpoint of OVERPASS_ENDPOINTS) {
-    if (signal.aborted) throw new DOMException("Search cancelled", "AbortError");
+    if (signal?.aborted) {
+      throw new DOMException("Search cancelled", "AbortError");
+    }
+
+    const controller = new AbortController();
+    let timedOut = false;
+
+    const abortFromParent = () => controller.abort();
+
+    if (signal) {
+      signal.addEventListener("abort", abortFromParent, { once: true });
+    }
+
+    const timer = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, 12000);
 
     try {
       const response = await fetch(endpoint, {
@@ -621,29 +637,52 @@ async function runOverpass(clauses, signal) {
           "Accept": "application/json"
         },
         body: new URLSearchParams({ data: query }),
-        signal
+        signal: controller.signal
       });
 
-      if (!response.ok) throw new Error(`Station service returned HTTP ${response.status}.`);
+      if (!response.ok) {
+        throw new Error(
+          `Station service returned HTTP ${response.status}.`
+        );
+      }
 
       const data = await response.json();
-      return Array.isArray(data.elements) ? data.elements : [];
+
+      if (!Array.isArray(data.elements)) {
+        throw new Error(
+          "The charging station service returned invalid data."
+        );
+      }
+
+      return data.elements;
     } catch (error) {
-      if (error.name === "AbortError") throw error;
-      lastError = error;
+      if (signal?.aborted) {
+        throw new DOMException("Search cancelled", "AbortError");
+      }
+
+      lastError = timedOut
+        ? new Error("A charging station server timed out.")
+        : error;
+
+      console.warn(
+        `Overpass endpoint failed (${endpoint}):`,
+        lastError
+      );
+    } finally {
+      clearTimeout(timer);
+
+      if (signal) {
+        signal.removeEventListener("abort", abortFromParent);
+      }
     }
   }
 
-  if (lastError instanceof TypeError) {
-    throw new Error(
-      "Could not reach the charging data servers. Check your internet connection, VPN or ad blocker, or add an Open Charge Map key in script.js."
-    );
-  }
-
   throw new Error(
-    lastError?.message || "Charging station data is temporarily unavailable. Please try again."
+    `${lastError?.message || "Charging station data is temporarily unavailable."} ` +
+    "Your route is still available. Please try searching again later."
   );
 }
+
 
 function fetchOverpassStations(lat, lon, radius, signal) {
   return runOverpass([`(around:${radius},${lat},${lon})`], signal);
